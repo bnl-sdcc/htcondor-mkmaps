@@ -52,7 +52,7 @@ class MakeMaps(object):
         logging.debug("Running post command...")
         cmd = self.config.get('main','postrun')
         return_code = subprocess.call(cmd, shell=True)
-        self.log.debug("Postrun return code is %s" % return_code) 
+        logging.debug("Postrun return code is %s" % return_code) 
 
 class MapfileHandler(object):
     
