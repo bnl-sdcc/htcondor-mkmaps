@@ -1,4 +1,7 @@
-# 
+#
+# mkmaps.conf 
+#
+#
 [main]
 maps = projectname, accountinggroup
 header =  # This file generated via cron. Edits will be overwritten.

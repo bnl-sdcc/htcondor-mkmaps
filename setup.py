@@ -22,7 +22,7 @@ setup(
                ],
     install_requires=[],
     
-    data_files=[ ('/etc/condor/', ['etc/condor/mkmaps.conf']),
+    data_files=[ ('/etc/condor/', ['etc/condor/mkmaps.conf.example']),
                  ('/etc/cron.d/', ['etc/mkmaps.cron']),              
         ],
     )
