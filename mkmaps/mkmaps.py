@@ -1,13 +1,10 @@
 #!/bin/env python
 #
-# Looks up members of groups, and individual users in mkprojectnamemapfile.conf
-# Generates condor usermap file in form:
-#    * <username>  <ProjectName>
-#    * <username2> <ProjectName>
-#
-# based on target it config file. 
-#
-#
+# -- Looks up members of UNIX groups, and individual users for attributes.  
+# -- Generates condor usermap(s) file in form:
+#    * <username>  <attrname>
+#    * <username2> <attrname>
+# -- Sets map(s) active in /etc/condor/config.d/attrmaps.conf
 # 
 
 import argparse
@@ -16,55 +13,102 @@ import logging
 import grp
 import pwd
 
+class MakeMaps(object):
+    
+    def __init__(self, config):
+        logging.debug("Using config: %s " % (config))
+        self.config = config
+        self.condorconfigdir = config.get('main','condorconfigdir')
+        self.condorconfigname = config.get('main','condorconfigname')
+        mlist = config.get('main','maps').split(',')
+        self.maps = [  m.strip().lower() for m in mlist ]
+        self.handlers = []
+        for section in self.maps:
+             mh = MapfileHandler(config, section)
+             self.handlers.append(mh)
+
+    def make_all_maps(self):
+        logging.debug("Handling all maps... ")
+        for handler in self.handlers:
+            handler.create_mapfile()
+            handler.write_mapfile()
+
+    def make_condorconfig(self):
+        logging.debug("Creating Condor config file. ")
+        filelines = []  # list of strings
+        filelines.append(self.header)
+        for handler in self.handlers:
+            line = handler.getcondorconfline()
+            filelines.append(line)
+        self.condorconfig = ""
+        for line in filelines:
+            self.condorconfig += "%s\n" % line
+        logging.debug("Condor config: %s" % self.condorconfig)
+
+    def do_post(self):
+        logging.debug("Running post command...")
+
 class MapfileHandler(object):
     
     def __init__(self, config, section):
-        logging.debug("Using config: %s   " % (config))
         self.config = config
-        self.defaulttarget = config.get(section, 'defaulttarget')
-        self.mapfile = config.get(section, 'mapfile')
-        self.header = config.get('main','header')        
-       
+        self.section = section
+        self.header = config.get('main','header')  
+        self.mapfile = config.get(self.section, 'mapfile')
+        self.attrname = config.get(self.section, 'attrname')
+        self.defaulttarget = config.get(self.section, 'defaulttarget')
+        self.gmsection = "%s-groupmappings" % section
+        self.umsection = "%s-usermappings" % section
+          
         
     def create_mapfile(self):
+        logging.debug("Creating map...")
         filelines = []  # list of strings
-        
         filelines.append(self.header)
             
-        goptions = self.config.options('groupmappings')
+        goptions = self.config.options(self.gmsection)
         for go in goptions:
-            target=self.config.get('groupmappings',go)
+            target=self.config.get(self.gmsection,go)
             logging.debug("group is %s target is %s" % (go, target))
             db = grp.getgrnam(go)
             for u in db.gr_mem:
                 line = "* %s %s" % (u, target )
                 filelines.append(line)
                 
-        uoptions = self.config.options('usermappings')
+        uoptions = self.config.options(self.umsection)
         for uo in uoptions:
             logging.debug("user is %s" % uo)
-            target = self.config.get('usermappings', uo)
+            target = self.config.get(self.umsection, uo)
             line = "* %s %s" % (uo, target  )
             logging.debug("Line is %s" % line)
             filelines.append(line)
         
-        dt = self.config.get('main','defaulttarget')
+        dt = self.config.get(self.section,'defaulttarget')
         line = "* /.*/ %s" % dt
         filelines.append(line)
         
         self.map = ""
         for line in filelines:
             self.map += "%s\n" % line
-        logging.debug("Successfully build map...")
+        logging.debug("Successfully built map...")
             
 
     def write_mapfile(self):
-        filepath = self.config.get('main','mapfile')
+        filepath = self.config.get(self.section,'mapfile')
         logging.debug("Writing map to %s" % filepath)
         f = open(filepath, 'w')
         f.write(self.map)
-        
+        logging.debug("Successfully wrote map to %s" % filepath )
 
+    def getcondorconfline(self):
+        logging.debug("Making config line...")
+        #use FEATURE : SetJobAttrFromUsermap(projectName, Owner, ProjectNameMap, /etc/condor/projectname.usermap)
+        cline = "use FEATURE : SetJobAttrFromUsermap(%s, Owner, %sMap, %s.usermap)" % (self.attrname,
+                                                                                       self.attrname,
+                                                                                       self.section)
+        logging.debug("Condor config line: %s" % cline)
+        return cline
+    
 
 if __name__ == '__main__':
 
@@ -88,11 +132,11 @@ if __name__ == '__main__':
     
     config = ConfigParser()
     config.read(args.conffile)
-     
-    mh = MapfileHandler(config)
-    mh.create_mapfile()
-    logging.debug("Map is : %s" % mh.map)
-    mh.write_mapfile()
+    
+    mm = MakeMaps(config)
+    mm.make_all_maps()
+    mm.make_condorconfig()
+       
     
 
     
