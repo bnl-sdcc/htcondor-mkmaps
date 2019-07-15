@@ -142,6 +142,7 @@ if __name__ == '__main__':
     mm = MakeMaps(config)
     mm.make_all_maps()
     mm.make_condorconfig()
+    mm.do_postrun()
        
     
 
