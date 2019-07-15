@@ -12,6 +12,7 @@ from ConfigParser import ConfigParser
 import logging
 import grp
 import pwd
+import subprocess
 
 class MakeMaps(object):
     
@@ -20,6 +21,8 @@ class MakeMaps(object):
         self.config = config
         self.condorconfigdir = config.get('main','condorconfigdir')
         self.condorconfigname = config.get('main','condorconfigname')
+        self.header = config.get('main','header')
+        self.postrun = config.get('main','postrun')
         mlist = config.get('main','maps').split(',')
         self.maps = [  m.strip().lower() for m in mlist ]
         self.handlers = []
@@ -45,8 +48,11 @@ class MakeMaps(object):
             self.condorconfig += "%s\n" % line
         logging.debug("Condor config: %s" % self.condorconfig)
 
-    def do_post(self):
+    def do_postrun(self):
         logging.debug("Running post command...")
+        cmd = self.config.get('main','postrun')
+        return_code = subprocess.call(cmd, shell=True)
+        self.log.debug("Postrun return code is %s" % return_code) 
 
 class MapfileHandler(object):
     
