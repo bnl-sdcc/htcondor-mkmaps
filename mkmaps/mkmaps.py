@@ -122,9 +122,9 @@ class MapfileHandler(object):
     def getcondorconfline(self):
         logging.debug("Making config line...")
         #use FEATURE : SetJobAttrFromUsermap(projectName, Owner, ProjectNameMap, /etc/condor/projectname.usermap)
-        cline = "use FEATURE : SetJobAttrFromUsermap(%s, Owner, %sMap, %s.usermap)" % (self.attrname,
+        cline = "use FEATURE : SetJobAttrFromUsermap(%s, Owner, %sMap, %s)" % (self.attrname,
                                                                                        self.attrname,
-                                                                                       self.section)
+                                                                                       self.mapfile)
         logging.debug("Condor config line: %s" % cline)
         return cline
     
