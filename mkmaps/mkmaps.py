@@ -30,8 +30,14 @@ class MakeMaps(object):
              mh = MapfileHandler(config, section)
              self.handlers.append(mh)
 
+    def handle_all(self):
+        self.make_all_maps()
+        self.make_condorconfig()
+        self.write_condorconfig()
+        self.do_postrun()
+
     def make_all_maps(self):
-        logging.debug("Handling all maps... ")
+        logging.debug("Making all maps... ")
         for handler in self.handlers:
             handler.create_mapfile()
             handler.write_mapfile()
@@ -47,6 +53,13 @@ class MakeMaps(object):
         for line in filelines:
             self.condorconfig += "%s\n" % line
         logging.debug("Condor config: %s" % self.condorconfig)
+    
+    def write_condorconfig(self):
+        filepath = "%s/%s" % (self.condorconfigdir, self.condorconfigname)
+        logging.debug("Writing map to %s" % filepath)
+        f = open(filepath, 'w')
+        f.write(self.condorconfig)
+        logging.debug("Successfully wrote config to %s" % filepath )    
 
     def do_postrun(self):
         logging.debug("Running post command...")
@@ -140,9 +153,8 @@ if __name__ == '__main__':
     config.read(args.conffile)
     
     mm = MakeMaps(config)
-    mm.make_all_maps()
-    mm.make_condorconfig()
-    mm.do_postrun()
+    mm.handle_all()
+
        
     
 
