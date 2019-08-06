@@ -131,7 +131,7 @@ class MapfileHandler(object):
 
 if __name__ == '__main__':
 
-    logging.basicConfig(format='%(asctime)s (UTC) [ %(levelname)s ] %(name)s %(filename)s:%(lineno)d %(funcName)s(): %(message)s')
+    logging.basicConfig(format='%(asctime)s (UTC) [%(levelname)s] %(name)s %(filename)s:%(lineno)d %(funcName)s(): %(message)s')
     
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--conf', 
